@@ -111,6 +111,9 @@ input[type=date].cost-field-input{width:120px;font-weight:400}
 .modal label{display:block;font-size:12px;color:#6b6558;margin:10px 0 3px;font-family:var(--mono)}
 .modal input,.modal select,.modal textarea{width:100%}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.pc-suggest{position:absolute;left:0;right:0;top:calc(100% + 2px);background:#fff;border:1px solid var(--line);border-radius:6px;max-height:220px;overflow-y:auto;z-index:60;box-shadow:0 4px 14px rgba(0,0,0,.14)}
+.pc-suggest-item{padding:6px 10px;cursor:pointer;font-size:13px}
+.pc-suggest-item:hover{background:var(--paper)}
 .toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:#fff;padding:10px 16px;border-radius:6px;font-size:13px;opacity:0;transform:translateY(10px);transition:.25s;pointer-events:none;z-index:99}
 .toast.show{opacity:1;transform:translateY(0)}
 ::-webkit-scrollbar{width:10px;height:10px}
@@ -657,7 +660,7 @@ const I18N = {
     dc_toast_prefix:'Nuovo conto creato (ID ', dc_toast_mid:') con ', dc_toast_suffix:' mesi copiati dal conto precedente',
     sa_alert_no_month:'Nessun mese con un costo inserito su cui allocare: inserisci prima il costo mensile.',
     sa_alert_no_budgetlines:'Non ci sono ancora budget line create. Vai su Progetti per crearne una.',
-    sa_title:'Nuova allocazione', sa_month:'Mese', sa_budgetline:'Budget line', sa_amount:'Importo', sa_amount_placeholder:'es. 500',
+    sa_title:'Nuova allocazione', sa_month:'Mese', sa_budgetline:'Budget line', sa_budgetline_search_placeholder:'Cerca budget line…', sa_amount:'Importo', sa_amount_placeholder:'es. 500',
     sa_btn_add:'Aggiungi', sa_alert_choose_budgetline:'Scegli una budget line', sa_alert_amount_positive:'Inserisci un importo maggiore di zero',
     ba_title:'Alloca su più mesi',
     ba_subtitle:'Ripartisce lo stesso importo su ogni mese del periodo scelto, per la budget line selezionata. I mesi senza un costo inserito vengono saltati.',
@@ -835,7 +838,7 @@ const I18N = {
     dc_toast_prefix:'New account created (ID ', dc_toast_mid:') with ', dc_toast_suffix:' months copied from the previous account',
     sa_alert_no_month:'No month with a cost entered to allocate on: enter the monthly cost first.',
     sa_alert_no_budgetlines:'No budget lines created yet. Go to Projects to create one.',
-    sa_title:'New allocation', sa_month:'Month', sa_budgetline:'Budget line', sa_amount:'Amount', sa_amount_placeholder:'e.g. 500',
+    sa_title:'New allocation', sa_month:'Month', sa_budgetline:'Budget line', sa_budgetline_search_placeholder:'Search budget line…', sa_amount:'Amount', sa_amount_placeholder:'e.g. 500',
     sa_btn_add:'Add', sa_alert_choose_budgetline:'Choose a budget line', sa_alert_amount_positive:'Enter an amount greater than zero',
     ba_title:'Allocate across months',
     ba_subtitle:'Splits the same amount across every month of the chosen period, for the selected budget line. Months with no cost entered are skipped.',
@@ -1013,7 +1016,7 @@ const I18N = {
     dc_toast_prefix:'Nouveau compte créé (ID ', dc_toast_mid:') avec ', dc_toast_suffix:' mois copiés depuis le compte précédent',
     sa_alert_no_month:"Aucun mois avec un coût saisi sur lequel allouer : saisissez d'abord le coût mensuel.",
     sa_alert_no_budgetlines:'Aucune budget line créée pour le moment. Allez dans Projets pour en créer une.',
-    sa_title:'Nouvelle allocation', sa_month:'Mois', sa_budgetline:'Budget line', sa_amount:'Montant', sa_amount_placeholder:'ex. 500',
+    sa_title:'Nouvelle allocation', sa_month:'Mois', sa_budgetline:'Budget line', sa_budgetline_search_placeholder:'Rechercher une budget line…', sa_amount:'Montant', sa_amount_placeholder:'ex. 500',
     sa_btn_add:'Ajouter', sa_alert_choose_budgetline:'Choisissez une budget line', sa_alert_amount_positive:'Saisissez un montant supérieur à zéro',
     ba_title:'Allouer sur plusieurs mois',
     ba_subtitle:'Répartit le même montant sur chaque mois de la période choisie, pour la budget line sélectionnée. Les mois sans coût saisi sont ignorés.',
@@ -1191,7 +1194,7 @@ const I18N = {
     dc_toast_prefix:'Nueva cuenta creada (ID ', dc_toast_mid:') con ', dc_toast_suffix:' meses copiados de la cuenta anterior',
     sa_alert_no_month:'No hay ningún mes con un costo ingresado para asignar: ingrese primero el costo mensual.',
     sa_alert_no_budgetlines:'Aún no hay budget lines creadas. Vaya a Proyectos para crear una.',
-    sa_title:'Nueva asignación', sa_month:'Mes', sa_budgetline:'Budget line', sa_amount:'Importe', sa_amount_placeholder:'ej. 500',
+    sa_title:'Nueva asignación', sa_month:'Mes', sa_budgetline:'Budget line', sa_budgetline_search_placeholder:'Buscar budget line…', sa_amount:'Importe', sa_amount_placeholder:'ej. 500',
     sa_btn_add:'Agregar', sa_alert_choose_budgetline:'Elija una budget line', sa_alert_amount_positive:'Ingrese un importe mayor que cero',
     ba_title:'Asignar en varios meses',
     ba_subtitle:'Reparte el mismo importe en cada mes del período elegido, para la budget line seleccionada. Los meses sin costo ingresado se omiten.',
@@ -1369,7 +1372,7 @@ const I18N = {
     dc_toast_prefix:'Nova conta criada (ID ', dc_toast_mid:') com ', dc_toast_suffix:' meses copiados da conta anterior',
     sa_alert_no_month:'Nenhum mês com custo inserido para alocar: insira primeiro o custo mensal.',
     sa_alert_no_budgetlines:'Ainda não há budget lines criadas. Vá em Projetos para criar uma.',
-    sa_title:'Nova alocação', sa_month:'Mês', sa_budgetline:'Budget line', sa_amount:'Valor', sa_amount_placeholder:'ex. 500',
+    sa_title:'Nova alocação', sa_month:'Mês', sa_budgetline:'Budget line', sa_budgetline_search_placeholder:'Buscar budget line…', sa_amount:'Valor', sa_amount_placeholder:'ex. 500',
     sa_btn_add:'Adicionar', sa_alert_choose_budgetline:'Escolha uma budget line', sa_alert_amount_positive:'Insira um valor maior que zero',
     ba_title:'Alocar em vários meses',
     ba_subtitle:'Distribui o mesmo valor em cada mês do período escolhido, para a budget line selecionada. Os meses sem custo inserido são ignorados.',
@@ -2546,6 +2549,31 @@ function duplicateCostModal(){
     toast(`${t('dc_toast_prefix')}${newAccount}${t('dc_toast_mid')}${copied}${t('dc_toast_suffix')}`);
   };
 }
+// Casella di ricerca per le budget line: filtra per prefisso del codice mentre si
+// digita (ordinate), al posto di uno <select> con centinaia di righe da scorrere.
+function attachBudgetLineSearch(inputId, listId){
+  const input = document.getElementById(inputId);
+  const list = document.getElementById(listId);
+  if(!input || !list) return;
+  const codes = state.projectCodes.slice().sort((a,b)=> a.fullCode.localeCompare(b.fullCode, undefined, {numeric:true, sensitivity:'base'}));
+  function renderList(query){
+    const q = query.trim().toLowerCase();
+    const matches = (q ? codes.filter(pc=> pc.fullCode.toLowerCase().startsWith(q)) : codes).slice(0,80);
+    if(!matches.length){ list.style.display='none'; list.innerHTML=''; return; }
+    list.innerHTML = matches.map(pc=>`<div class="pc-suggest-item" data-code="${escv(pc.fullCode)}">${escv(pc.fullCode)} — ${escv((pc.description||'').slice(0,50))}</div>`).join('');
+    list.style.display = 'block';
+  }
+  input.addEventListener('focus', ()=> renderList(input.value));
+  input.addEventListener('input', ()=> renderList(input.value));
+  input.addEventListener('blur', ()=> setTimeout(()=>{ list.style.display='none'; }, 150));
+  list.addEventListener('mousedown', (e)=>{
+    const item = e.target.closest('.pc-suggest-item');
+    if(!item) return;
+    e.preventDefault();
+    input.value = item.dataset.code;
+    list.style.display = 'none';
+  });
+}
 function newAllocFromSummaryModal(){
   const account = currentAccount;
   const c = state.costs.find(x=>x.account===account);
@@ -2558,19 +2586,23 @@ function newAllocFromSummaryModal(){
     <label>${t('sa_month')}</label>
     <select id="f-sa-month">${monthsWithCost.map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('')}</select>
     <label>${t('sa_budgetline')}</label>
-    <select id="f-sa-pc">${state.projectCodes.map(pc=>`<option value="${escv(pc.fullCode)}">${escv(pc.fullCode)} — ${escv((pc.description||'').slice(0,40))}</option>`).join('')}</select>
+    <div style="position:relative">
+      <input type="text" id="f-sa-pc" autocomplete="off" placeholder="${t('sa_budgetline_search_placeholder')}">
+      <div id="f-sa-pc-list" class="pc-suggest" style="display:none"></div>
+    </div>
     <label>${t('sa_amount')}</label>
     <input type="text" inputmode="decimal" id="f-sa-amount" placeholder="${t('sa_amount_placeholder')}">
     <div class="modal-actions">
       <button class="btn ghost" id="cancel-modal">${t('modal_cancel')}</button>
       <button class="btn accent" id="save-new-summary-alloc">${t('sa_btn_add')}</button>
     </div>`);
+  attachBudgetLineSearch('f-sa-pc', 'f-sa-pc-list');
   document.getElementById('cancel-modal').onclick = closeModal;
   document.getElementById('save-new-summary-alloc').onclick = ()=>{
     const month = document.getElementById('f-sa-month').value;
-    const projectCode = document.getElementById('f-sa-pc').value;
+    const projectCode = document.getElementById('f-sa-pc').value.trim();
     const amount = parseAmount(document.getElementById('f-sa-amount').value);
-    if(!projectCode){ alert(t('sa_alert_choose_budgetline')); return; }
+    if(!projectCode || !state.projectCodes.some(pc=>pc.fullCode===projectCode)){ alert(t('sa_alert_choose_budgetline')); return; }
     if(amount===null || amount<=0){ alert(t('sa_alert_amount_positive')); return; }
     state.allocations.push({_id:uid(), account, month, projectCode, amount});
     saveState(); closeModal(); render();
@@ -2620,9 +2652,10 @@ function bulkAllocModal(){
     <h3>${t('ba_title')}</h3>
     <div class="subtitle" style="margin-bottom:10px">${t('ba_subtitle')}</div>
     <label>${t('sa_budgetline')}</label>
-    <select id="f-ba-pc">
-      ${state.projectCodes.map(pc=>`<option value="${pc.fullCode}">${pc.fullCode} — ${(pc.description||'').slice(0,40)}</option>`).join('')}
-    </select>
+    <div style="position:relative">
+      <input type="text" id="f-ba-pc" autocomplete="off" placeholder="${t('sa_budgetline_search_placeholder')}">
+      <div id="f-ba-pc-list" class="pc-suggest" style="display:none"></div>
+    </div>
     <label>${t('ba_from')}</label>
     <select id="f-ba-from">${monthOptions}</select>
     <label>${t('ba_to')}</label>
@@ -2637,15 +2670,17 @@ function bulkAllocModal(){
       <button class="btn ghost" id="cancel-modal">${t('modal_cancel')}</button>
       <button class="btn accent" id="save-bulk-alloc">${t('ba_btn_allocate')}</button>
     </div>`);
+  attachBudgetLineSearch('f-ba-pc', 'f-ba-pc-list');
   const toSel = document.getElementById('f-ba-to');
   toSel.value = months[months.length-1];
   document.getElementById('cancel-modal').onclick = closeModal;
   document.getElementById('save-bulk-alloc').onclick = ()=>{
-    const projectCode = document.getElementById('f-ba-pc').value;
+    const projectCode = document.getElementById('f-ba-pc').value.trim();
     const from = document.getElementById('f-ba-from').value;
     const to = document.getElementById('f-ba-to').value;
     const amount = parseAmount(document.getElementById('f-ba-amount').value);
     const pct = parseAmount(document.getElementById('f-ba-pct').value);
+    if(!projectCode || !state.projectCodes.some(pc=>pc.fullCode===projectCode)){ alert(t('sa_alert_choose_budgetline')); return; }
     if((amount===null||amount<=0) && (pct===null||pct<=0)){ alert(t('ba_alert_need_amount_or_pct')); return; }
     if(amount!==null && amount>0 && pct!==null && pct>0){ alert(t('ba_alert_only_one')); return; }
     const fromIdx = months.indexOf(from), toIdx = months.indexOf(to);
