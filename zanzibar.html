@@ -2278,7 +2278,10 @@ function viewCostDetail(account){
   </div>
   <div class="section-title" id="section-summary" style="display:flex;align-items:center;justify-content:space-between">
     <span>${t('cd_summary_title')}</span>
-    <button class="btn accent" id="btn-new-summary-alloc">${t('cd_new_alloc')}</button>
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+      <button class="btn accent" id="btn-new-summary-alloc">${t('cd_new_alloc')}</button>
+      <button class="btn accent" id="btn-bulk-alloc">${t('cd_bulk_alloc')}</button>
+    </div>
   </div>
   <div class="subtitle" style="margin-top:-4px">${t('cd_summary_subtitle')}</div>
   <table>
@@ -2326,9 +2329,8 @@ function viewCostDetail(account){
       return projectRows + `<tr class="grp"><td colspan="2">${t('cd_period_total')}</td><td class="num">${fmt(totalAllocated)}</td><td class="num">${totalCost?fmt(totalShare)+'%':'—'}</td><td></td></tr>`;
     })()}</tfoot>
   </table>
-  <div class="section-title" id="section-monthly" style="display:flex;align-items:center;justify-content:space-between">
+  <div class="section-title" id="section-monthly">
     <span>${t('cd_monthly_title')}</span>
-    <button class="btn accent" id="btn-bulk-alloc">${t('cd_bulk_alloc')}</button>
   </div>
   <table>
     <thead><tr><th>${t('cd_th_month')}</th><th class="num">${t('cd_th_cost_month')}</th><th class="num">${t('cd_th_alloc_month')}</th><th class="num">${t('cd_th_delta')}</th><th></th></tr></thead>
