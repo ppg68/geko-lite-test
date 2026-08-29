@@ -131,7 +131,9 @@ input[type=date].cost-field-input{width:120px;font-weight:400}
     <div id="lang-switcher" style="padding:0 16px 12px;display:flex;gap:4px"><button data-lang="it" title="Lingua" style="all:unset;cursor:pointer;font-size:16px;padding:3px 5px;border-radius:5px;opacity:.45;">🇮🇹</button><button data-lang="en" title="Language" style="all:unset;cursor:pointer;font-size:16px;padding:3px 5px;border-radius:5px;opacity:1;background:rgba(255,255,255,.14)">🇬🇧</button><button data-lang="fr" title="Langue" style="all:unset;cursor:pointer;font-size:16px;padding:3px 5px;border-radius:5px;opacity:.45;">🇫🇷</button><button data-lang="es" title="Idioma" style="all:unset;cursor:pointer;font-size:16px;padding:3px 5px;border-radius:5px;opacity:.45;">🇪🇸</button><button data-lang="pt" title="Idioma" style="all:unset;cursor:pointer;font-size:16px;padding:3px 5px;border-radius:5px;opacity:.45;">🇵🇹</button></div>
     <div style="padding:0 16px 12px">
       <button class="btn accent pulse-attn" id="btn-download-updated" style="font-size:12px;padding:9px 8px;position:relative;width:100%">⤓ Download updated file<span id="unsaved-badge" style="display: inline-block; position: absolute; top: -5px; right: -5px; width: 12px; height: 12px; border-radius: 50%; background: rgb(255, 204, 0); border: 2px solid rgb(255, 255, 255);"></span></button>
-      <div style="font-size:10.5px;color:#8fa0b3;line-height:1.4;margin-top:6px">Attach this file to your reply email. The recipient will already have all your updated data.</div>
+      <button class="btn" id="btn-save-as" style="font-size:12px;padding:9px 8px;width:100%;margin-top:6px;background:rgba(255,255,255,.08);color:#dbe2ea;border:1px solid rgba(255,255,255,.2)">⤓ Save as</button>
+      <div id="download-hint" style="font-size:10.5px;color:#8fa0b3;line-height:1.4;margin-top:6px">Attach this file to your reply email. The recipient will already have all your updated data.</div>
+      <div id="save-as-note" style="font-size:10px;color:#8fa0b3;line-height:1.4;margin-top:4px;font-style:italic"></div>
     </div>
     <nav id="nav"><button data-tab="dashboard" class="">📊 Dashboard</button><button data-tab="costi" class="active">💶 Costs</button><button data-tab="progetti" class="">📁 Projects</button><button data-tab="reparti" class="">🏷️ Departments</button><button data-tab="cambio" class="">💱 Exchange rates</button></nav>
     <div class="sidebar-foot">
@@ -685,35 +687,42 @@ function editMetaModal(){
   };
 }
 
-// ---------- download del file HTML aggiornato (per invio via email) ----------
+// ---------- costruzione del file HTML aggiornato (per invio via email) ----------
+function buildUpdatedFile(){
+  const html = document.documentElement.outerHTML;
+  const startMarker = '/*SEED_JSON_START*/';
+  const endMarker = '/*SEED_JSON_END*/';
+  const stampStart = '/*STAMP_START*/';
+  const stampEnd = '/*STAMP_END*/';
+  const i1 = html.indexOf(startMarker);
+  const i2 = html.indexOf(endMarker);
+  const s1 = html.indexOf(stampStart);
+  const s2 = html.indexOf(stampEnd);
+  if(i1===-1 || i2===-1 || s1===-1 || s2===-1) throw new Error('Marcatori non trovati nel file');
+  const now = new Date();
+  const stamp = now.toLocaleString('it-IT');
+  const before = html.slice(0, i1+startMarker.length);
+  const afterSeed = html.slice(i2);
+  const middle = JSON.stringify(state);
+  let rebuilt = before + middle + afterSeed;
+  // ricalcola le posizioni dello stamp sul testo ricostruito
+  const j1 = rebuilt.indexOf(stampStart);
+  const j2 = rebuilt.indexOf(stampEnd);
+  rebuilt = rebuilt.slice(0, j1+stampStart.length) + JSON.stringify(stamp) + rebuilt.slice(j2);
+  const full = '<!DOCTYPE html>\n' + rebuilt;
+  const dstamp = now.toISOString().slice(0,10);
+  const filename = `geko-lite-${slugify(state.meta.country)}-${dstamp}.html`;
+  return {full, filename};
+}
+
+// download automatico nella cartella Download del browser (funziona ovunque, incluso Firefox)
 function downloadUpdatedFile(){
   try{
-    const html = document.documentElement.outerHTML;
-    const startMarker = '/*SEED_JSON_START*/';
-    const endMarker = '/*SEED_JSON_END*/';
-    const stampStart = '/*STAMP_START*/';
-    const stampEnd = '/*STAMP_END*/';
-    const i1 = html.indexOf(startMarker);
-    const i2 = html.indexOf(endMarker);
-    const s1 = html.indexOf(stampStart);
-    const s2 = html.indexOf(stampEnd);
-    if(i1===-1 || i2===-1 || s1===-1 || s2===-1) throw new Error('Marcatori non trovati nel file');
-    const now = new Date();
-    const stamp = now.toLocaleString('it-IT');
-    const before = html.slice(0, i1+startMarker.length);
-    const afterSeed = html.slice(i2);
-    const middle = JSON.stringify(state);
-    let rebuilt = before + middle + afterSeed;
-    // ricalcola le posizioni dello stamp sul testo ricostruito
-    const j1 = rebuilt.indexOf(stampStart);
-    const j2 = rebuilt.indexOf(stampEnd);
-    rebuilt = rebuilt.slice(0, j1+stampStart.length) + JSON.stringify(stamp) + rebuilt.slice(j2);
-    const full = '<!DOCTYPE html>\n' + rebuilt;
+    const {full, filename} = buildUpdatedFile();
     const blob = new Blob([full], {type:'text/html'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const dstamp = now.toISOString().slice(0,10);
-    a.href = url; a.download = `geko-lite-${slugify(state.meta.country)}-${dstamp}.html`;
+    a.href = url; a.download = filename;
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
     hasUnsavedChanges = false;
@@ -723,12 +732,44 @@ function downloadUpdatedFile(){
     alert('Errore durante la generazione del file: ' + err.message);
   }
 }
+
+// "Salva con nome": apre la finestra di sistema per scegliere cartella/nome.
+// Disponibile solo su browser Chromium (Chrome, Edge, Opera, Brave); su Firefox/Safari
+// ricade automaticamente sul download normale nella cartella Download.
+async function downloadUpdatedFileAs(){
+  try{
+    const {full, filename} = buildUpdatedFile();
+    if(window.showSaveFilePicker){
+      try{
+        const handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [{description:'File HTML', accept:{'text/html':['.html']}}]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(full);
+        await writable.close();
+        hasUnsavedChanges = false;
+        updateUnsavedIndicator();
+        toast(t('toast_file_downloaded'));
+        return;
+      }catch(err){
+        if(err.name === 'AbortError') return; // utente ha annullato la finestra
+        // altrimenti prosegue con il fallback sotto
+      }
+    }
+    downloadUpdatedFile();
+  }catch(err){
+    alert('Errore durante la generazione del file: ' + err.message);
+  }
+}
 // ---------- I18N ----------
 const I18N = {
   it: {
     nav_dashboard:'📊 Dashboard', nav_costi:'💶 Costi', nav_progetti:'📁 Progetti', nav_reparti:'🏷️ Reparti', nav_cambio:'💱 Cambio',
-    sidebar_download:'⤓ Scarica file aggiornato',
+    sidebar_download:'⤓ Salva',
     sidebar_download_hint:'Allega questo file alla tua email di risposta. Chi lo riceve avrà già tutti i tuoi dati aggiornati.',
+    sidebar_save_as:'⤓ Salva con nome',
+    sidebar_save_as_note:'Potrebbe non funzionare su tutti i browser (es. Firefox): in tal caso il file viene comunque scaricato normalmente.',
     sidebar_file_version:'Versione file',
     sidebar_backup:'⤓ Backup (JSON)',
     sidebar_restore:'⤒ Ripristina backup',
@@ -905,8 +946,10 @@ const I18N = {
   },
   en: {
     nav_dashboard:'📊 Dashboard', nav_costi:'💶 Costs', nav_progetti:'📁 Projects', nav_reparti:'🏷️ Departments', nav_cambio:'💱 Exchange rates',
-    sidebar_download:'⤓ Download updated file',
+    sidebar_download:'⤓ Save',
     sidebar_download_hint:'Attach this file to your reply email. The recipient will already have all your updated data.',
+    sidebar_save_as:'⤓ Save as',
+    sidebar_save_as_note:'May not work in all browsers (e.g. Firefox): in that case the file is downloaded normally instead.',
     sidebar_file_version:'File version',
     sidebar_backup:'⤓ Backup (JSON)',
     sidebar_restore:'⤒ Restore backup',
@@ -1083,8 +1126,10 @@ const I18N = {
   },
   fr: {
     nav_dashboard:'📊 Tableau de bord', nav_costi:'💶 Coûts', nav_progetti:'📁 Projets', nav_reparti:'🏷️ Départements', nav_cambio:'💱 Taux de change',
-    sidebar_download:'⤓ Télécharger le fichier mis à jour',
+    sidebar_download:'⤓ Enregistrer',
     sidebar_download_hint:'Joignez ce fichier à votre e-mail de réponse. Le destinataire aura déjà toutes vos données à jour.',
+    sidebar_save_as:'⤓ Enregistrer sous',
+    sidebar_save_as_note:'Peut ne pas fonctionner sur tous les navigateurs (ex. Firefox) : dans ce cas, le fichier est simplement téléchargé normalement.',
     sidebar_file_version:'Version du fichier',
     sidebar_backup:'⤓ Sauvegarde (JSON)',
     sidebar_restore:'⤒ Restaurer une sauvegarde',
@@ -1261,8 +1306,10 @@ const I18N = {
   },
   es: {
     nav_dashboard:'📊 Panel', nav_costi:'💶 Costos', nav_progetti:'📁 Proyectos', nav_reparti:'🏷️ Departamentos', nav_cambio:'💱 Tipos de cambio',
-    sidebar_download:'⤓ Descargar archivo actualizado',
+    sidebar_download:'⤓ Guardar',
     sidebar_download_hint:'Adjunte este archivo a su correo de respuesta. El destinatario ya tendrá todos sus datos actualizados.',
+    sidebar_save_as:'⤓ Guardar como',
+    sidebar_save_as_note:'Puede que no funcione en todos los navegadores (p. ej. Firefox): en ese caso el archivo se descarga normalmente.',
     sidebar_file_version:'Versión del archivo',
     sidebar_backup:'⤓ Copia de seguridad (JSON)',
     sidebar_restore:'⤒ Restaurar copia de seguridad',
@@ -1439,8 +1486,10 @@ const I18N = {
   },
   pt: {
     nav_dashboard:'📊 Painel', nav_costi:'💶 Custos', nav_progetti:'📁 Projetos', nav_reparti:'🏷️ Departamentos', nav_cambio:'💱 Taxas de câmbio',
-    sidebar_download:'⤓ Baixar arquivo atualizado',
+    sidebar_download:'⤓ Salvar',
     sidebar_download_hint:'Anexe este arquivo ao seu e-mail de resposta. O destinatário já terá todos os seus dados atualizados.',
+    sidebar_save_as:'⤓ Salvar como',
+    sidebar_save_as_note:'Pode não funcionar em todos os navegadores (ex. Firefox): nesse caso, o arquivo é baixado normalmente.',
     sidebar_file_version:'Versão do arquivo',
     sidebar_backup:'⤓ Backup (JSON)',
     sidebar_restore:'⤒ Restaurar backup',
@@ -3497,8 +3546,12 @@ function renderSidebarStrings(){
     dl.textContent = t('sidebar_download');
     if(badge) dl.appendChild(badge);
   }
-  const hint = dl ? dl.nextElementSibling : null;
+  const saveAsBtn = document.getElementById('btn-save-as');
+  if(saveAsBtn) saveAsBtn.textContent = t('sidebar_save_as');
+  const hint = document.getElementById('download-hint');
   if(hint) hint.textContent = t('sidebar_download_hint');
+  const saveAsNote = document.getElementById('save-as-note');
+  if(saveAsNote) saveAsNote.textContent = window.showSaveFilePicker ? '' : t('sidebar_save_as_note');
   const backupBtn = document.getElementById('btn-export-backup');
   if(backupBtn) backupBtn.textContent = t('sidebar_backup');
   const restoreLabel = document.getElementById('file-import-backup') ? document.getElementById('file-import-backup').parentElement : null;
@@ -3513,6 +3566,8 @@ function attachGlobalHandlers(){
   const brandBlock = document.getElementById('brand-block');
   if(brandBlock) brandBlock.onclick = editMetaModal;
   document.getElementById('btn-download-updated').onclick = downloadUpdatedFile;
+  const saveAsBtnEl = document.getElementById('btn-save-as');
+  if(saveAsBtnEl) saveAsBtnEl.onclick = downloadUpdatedFileAs;
   const vlabel = document.getElementById('file-version-label');
   if(vlabel){
     vlabel.textContent = t('sidebar_file_version') + ': ' + FILE_STAMP;
