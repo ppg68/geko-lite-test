@@ -616,6 +616,7 @@ const I18N = {
     ap_title_prefix:'Allocazione —', ap_subtitle:"Usa importo fisso oppure percentuale del costo mese — quale dei due scrivi aggiorna automaticamente l'altro.",
     ap_th_projectcode:'Codice progetto', ap_th_amount_eur:'Importo €', ap_th_pct_month:'% del costo mese',
     ap_empty:'Nessuna allocazione per questo mese', ap_add_row:'+ Aggiungi riga di allocazione',
+    ap_copy_prev_btn:'⇊ Copia allocazioni mese prec.', ap_copy_prev_title:'Copia le allocazioni del mese precedente',
     proj_title:'Progetti', proj_subtitle:'Clicca su un progetto per espandere o nascondere le sue budget line (Code de Projet).',
     proj_btn_new_project:'+ Nuovo progetto', proj_btn_new_budgetline:'+ Nuova budget line',
     proj_filter_all:'Tutti', proj_kind_01:'01 Approvato', proj_kind_02:'02 In presentazione', proj_kind_03:'03 Chiuso',
@@ -796,6 +797,7 @@ const I18N = {
     ap_title_prefix:'Allocation —', ap_subtitle:'Use a fixed amount or a percentage of the month cost — whichever you enter updates the other automatically.',
     ap_th_projectcode:'Project code', ap_th_amount_eur:'Amount €', ap_th_pct_month:'% of month cost',
     ap_empty:'No allocation for this month', ap_add_row:'+ Add allocation row',
+    ap_copy_prev_btn:'⇊ Copy previous month', ap_copy_prev_title:"Copy previous month's allocations",
     proj_title:'Projects', proj_subtitle:'Click a project to expand or collapse its budget lines (Code de Projet).',
     proj_btn_new_project:'+ New project', proj_btn_new_budgetline:'+ New budget line',
     proj_filter_all:'All', proj_kind_01:'01 Approved', proj_kind_02:'02 Under submission', proj_kind_03:'03 Closed',
@@ -976,6 +978,7 @@ const I18N = {
     ap_title_prefix:'Allocation —', ap_subtitle:"Utilisez un montant fixe ou un pourcentage du coût du mois — celui que vous saisissez met à jour l'autre automatiquement.",
     ap_th_projectcode:'Code projet', ap_th_amount_eur:'Montant €', ap_th_pct_month:'% du coût du mois',
     ap_empty:'Aucune allocation pour ce mois', ap_add_row:"+ Ajouter une ligne d'allocation",
+    ap_copy_prev_btn:'⇊ Copier le mois précédent', ap_copy_prev_title:'Copier les allocations du mois précédent',
     proj_title:'Projets', proj_subtitle:'Cliquez sur un projet pour développer ou masquer ses budget lines (Code de Projet).',
     proj_btn_new_project:'+ Nouveau projet', proj_btn_new_budgetline:'+ Nouvelle budget line',
     proj_filter_all:'Tous', proj_kind_01:'01 Approuvé', proj_kind_02:'02 En soumission', proj_kind_03:'03 Clôturé',
@@ -1156,6 +1159,7 @@ const I18N = {
     ap_title_prefix:'Asignación —', ap_subtitle:'Use un importe fijo o un porcentaje del costo del mes — el que escriba actualiza el otro automáticamente.',
     ap_th_projectcode:'Código de proyecto', ap_th_amount_eur:'Importe €', ap_th_pct_month:'% del costo del mes',
     ap_empty:'Ninguna asignación para este mes', ap_add_row:'+ Agregar línea de asignación',
+    ap_copy_prev_btn:'⇊ Copiar mes anterior', ap_copy_prev_title:'Copiar las asignaciones del mes anterior',
     proj_title:'Proyectos', proj_subtitle:'Haga clic en un proyecto para expandir u ocultar sus budget lines (Code de Projet).',
     proj_btn_new_project:'+ Nuevo proyecto', proj_btn_new_budgetline:'+ Nueva budget line',
     proj_filter_all:'Todos', proj_kind_01:'01 Aprobado', proj_kind_02:'02 En presentación', proj_kind_03:'03 Cerrado',
@@ -1336,6 +1340,7 @@ const I18N = {
     ap_title_prefix:'Alocação —', ap_subtitle:'Use um valor fixo ou uma porcentagem do custo do mês — o que você digitar atualiza o outro automaticamente.',
     ap_th_projectcode:'Código do projeto', ap_th_amount_eur:'Valor €', ap_th_pct_month:'% do custo do mês',
     ap_empty:'Nenhuma alocação para este mês', ap_add_row:'+ Adicionar linha de alocação',
+    ap_copy_prev_btn:'⇊ Copiar mês anterior', ap_copy_prev_title:'Copiar as alocações do mês anterior',
     proj_title:'Projetos', proj_subtitle:'Clique em um projeto para expandir ou ocultar suas budget lines (Code de Projet).',
     proj_btn_new_project:'+ Novo projeto', proj_btn_new_budgetline:'+ Nova budget line',
     proj_filter_all:'Todos', proj_kind_01:'01 Aprovado', proj_kind_02:'02 Em submissão', proj_kind_03:'03 Encerrado',
@@ -2207,6 +2212,10 @@ function allocPanelHtml(account, month){
   const costMonth = rec ? rec.cost : 0;
   const allocs = state.allocations.filter(a=>a.account===account && a.month===month);
   const allocated = allocs.reduce((s,a)=>s+(a.amount||0),0);
+  const monthsListForAcc = monthsForAccount(c);
+  const prevMonthIdx = monthsListForAcc.indexOf(month);
+  const prevMonth = prevMonthIdx>0 ? monthsListForAcc[prevMonthIdx-1] : null;
+  const prevAllocsCount = prevMonth ? state.allocations.filter(a=>a.account===account && a.month===prevMonth).length : 0;
   const rows = allocs.map(a=>{
     const share = costMonth ? (a.amount/costMonth*100) : 0;
     return `<tr data-alloc-id="${a._id}">
@@ -2235,6 +2244,7 @@ function allocPanelHtml(account, month){
   </table>
   <div class="toolbar" style="margin-top:12px">
     <button class="btn ghost" id="btn-add-alloc" data-account="${account}" data-month="${month}">${t('ap_add_row')}</button>
+    ${prevMonth && prevAllocsCount>0 ? `<button class="btn ghost copy-prev-alloc-btn" data-account="${account}" data-month="${month}" data-prev="${prevMonth}" title="${t('ap_copy_prev_title')}">${t('ap_copy_prev_btn')}</button>` : ''}
   </div>`;
 }
 
@@ -3816,6 +3826,29 @@ function attachAllocHandlers(account, month){
     saveState();
     reopenAllocAfterChange(account, month);
   };
+  document.querySelectorAll('.copy-prev-alloc-btn').forEach(btn=>{
+    btn.onclick = ()=>{
+      const acc = btn.dataset.account;
+      const m = btn.dataset.month;
+      const prevMonth = btn.dataset.prev;
+      const prevAllocs = state.allocations.filter(a=>a.account===acc && a.month===prevMonth);
+      if(prevAllocs.length===0){
+        alert('Il mese precedente non ha allocazioni da copiare.');
+        return;
+      }
+      const currentAllocs = state.allocations.filter(a=>a.account===acc && a.month===m);
+      if(!confirm(
+        `Copiare le ${prevAllocs.length} allocazioni di ${monthLabel(prevMonth)} su ${monthLabel(m)}?` +
+        (currentAllocs.length>0 ? `\nLe ${currentAllocs.length} allocazioni già presenti su ${monthLabel(m)} verranno sostituite.` : '')
+      )) return;
+      state.allocations = state.allocations.filter(a=>!(a.account===acc && a.month===m));
+      prevAllocs.forEach(a=>{
+        state.allocations.push({_id: uid(), account:acc, month:m, projectCode:a.projectCode, amount:a.amount});
+      });
+      saveState();
+      reopenAllocAfterChange(acc, m);
+    };
+  });
 }
 
 // ensure existing allocations have _id
