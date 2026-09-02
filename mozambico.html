@@ -2165,7 +2165,11 @@ function viewCostDetail(account){
     const prevMonth = idx>0 ? monthsList[idx-1] : null;
     const copyBtn = prevMonth ? `<button class="copy-btn copy-prev-cost-btn" data-month="${m}" data-prev="${prevMonth}" title="${t('cd_copy_prev_title')}">⇊</button>` : '';
     return `<tr>
-      <td>${monthLabel(m)}</td>
+      <td>
+        <select class="month-select" data-month="${m}" ${!rec?'disabled':''}>
+          ${monthsList.map(mm=>`<option value="${mm}" ${mm===m?'selected':''}>${monthLabel(mm)}</option>`).join('')}
+        </select>
+      </td>
       <td class="num"><input class="num-input cost-month-input" data-month="${m}" type="text" inputmode="decimal" value="${cost===null?'':fmt(cost)}" placeholder="—">${copyBtn}</td>
       <td class="num">${cost===null?'—':fmt(alloc)}</td>
       <td class="num">${cost===null?'—':`<span class="dot ${st}"></span>${fmt(cost-alloc)}`}</td>
@@ -2241,7 +2245,11 @@ function viewCostDetail(account){
         const prevMonthRows = prevMonth ? state.allocations.filter(x=>x.account===account && x.month===prevMonth) : [];
         const copySource = prevMonthRows[posInMonth] || null;
         return `<tr data-summary-alloc-id="${a._id}">
-          <td>${monthLabel(a.month)}</td>
+          <td>
+            <select class="summary-month-select">
+              ${monthsListForAcc.map(mm=>`<option value="${mm}" ${mm===a.month?'selected':''}>${monthLabel(mm)}</option>`).join('')}
+            </select>
+          </td>
           <td style="display:flex;align-items:center;gap:4px">
             <select class="summary-pc-select" style="flex:1 1 auto">
               <option value="">${t('cd_select_budgetline')}</option>
@@ -2771,6 +2779,7 @@ function attachAllocSummaryHandlers(){
     if(!rec) return;
     const mc = state.monthlyCosts.find(x=>x.account===rec.account && x.month===rec.month);
     const costMonth = mc ? mc.cost : 0;
+    tr.querySelector('.summary-month-select').onchange = e=>{ rec.month = e.target.value; saveState(); render(); };
     tr.querySelector('.summary-pc-select').onchange = e=>{ rec.projectCode = e.target.value; saveState(); render(); };
     const amtInput = tr.querySelector('.summary-amt-input');
     amtInput.onfocus = ()=>{ amtInput.value = rec.amount; amtInput.select(); };
@@ -3850,6 +3859,23 @@ function attachHandlers(){
       const panelOpenMonth = document.getElementById('alloc-panel') && document.getElementById('alloc-panel').dataset.month;
       if(panelOpenMonth===month) reopenAllocAfterChange(currentAccount, month);
       else render();
+    };
+  });
+  document.querySelectorAll('.month-select').forEach(sel=>{
+    sel.onchange = ()=>{
+      const oldMonth = sel.dataset.month;
+      const newMonth = sel.value;
+      if(newMonth===oldMonth) return;
+      const rec = state.monthlyCosts.find(x=>x.account===currentAccount && x.month===oldMonth);
+      if(!rec){ render(); return; }
+      if(state.monthlyCosts.some(x=>x.account===currentAccount && x.month===newMonth)){
+        alert('Il mese selezionato ha già un costo inserito. Elimina o sposta prima quello.');
+        render();
+        return;
+      }
+      rec.month = newMonth;
+      saveState();
+      render();
     };
   });
   document.querySelectorAll('.copy-prev-cost-btn').forEach(btn=>{
