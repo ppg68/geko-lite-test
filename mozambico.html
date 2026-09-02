@@ -1736,8 +1736,13 @@ function monthlyAllocatedByKind(account, month, wantedPrefix){
 }
 function findAnomalies(){
   const items = [];
+  // Verifica limitata ai conti attivi: un conto Terminato è storico e non
+  // più azionabile, non ha senso segnalarlo qui (stesso filtro già usato
+  // dal rollup dei Department nella Dashboard).
+  const activeAccounts = new Set(state.costs.filter(c=>c.status!=='Terminato').map(c=>c.account));
   // 1. Allocazione mensile superiore al costo di quel mese
   state.monthlyCosts.forEach(m=>{
+    if(!activeAccounts.has(m.account)) return;
     if(m.cost===null || m.cost===undefined || m.cost<0) return;
     const alloc = monthlyAllocated(m.account, m.month);
     if(alloc > m.cost + 0.01){
@@ -1750,6 +1755,7 @@ function findAnomalies(){
   // 2. Allocazione in un mese senza costo inserito
   state.allocations.forEach(a=>{
     if(!a.account || !a.month) return; // riga non valida: gestita dalla pulizia dati, non da segnalare qui
+    if(!activeAccounts.has(a.account)) return;
     const m = state.monthlyCosts.find(x=>x.account===a.account && x.month===a.month);
     if(!m || m.cost===null || m.cost===undefined){
       const c = state.costs.find(x=>x.account===a.account);
@@ -1759,34 +1765,38 @@ function findAnomalies(){
         gotoAccount:a.account});
     }
   });
-  // 3. Budget line con allocazioni superiori al budget disponibile
+  // 3. Budget line con allocazioni superiori al budget disponibile (solo conti attivi)
   state.projectCodes.forEach(pc=>{
     if(pc.budAvailable===null || pc.budAvailable===undefined) return;
-    const alloc = projectCodeAllocated(pc.fullCode);
+    const alloc = state.allocations.filter(a=>a.projectCode===pc.fullCode && activeAccounts.has(a.account))
+      .reduce((s,a)=> s + toMain(a.amount||0, accountCurrency(a.account)), 0);
     if(alloc > pc.budAvailable + 0.01){
       items.push({category:t('anomaly_cat_3'),
         text:`${pc.fullCode} — ${(pc.description||'').replace(/\s+/g,' ').trim()}: ${t('anomaly_txt_allocated')} ${fmt(alloc)} ${t('anomaly_txt_on_budget')} ${fmt(pc.budAvailable)}`,
         gotoProject:pc.project});
     }
   });
-  // 4. Conto di costo senza Department assegnato
+  // 4. Conto di costo senza Department assegnato (solo attivi)
   state.costs.forEach(c=>{
+    if(!activeAccounts.has(c.account)) return;
     if(!c.department){
       items.push({category:t('anomaly_cat_4'),
         text:`${c.accCode||''} — ${c.name||''}`,
         gotoAccount:c.account});
     }
   });
-  // 5. Valuta del conto non definita nell'elenco Cambio
+  // 5. Valuta del conto non definita nell'elenco Cambio (solo attivi)
   state.costs.forEach(c=>{
+    if(!activeAccounts.has(c.account)) return;
     if(c.currency && !state.currencies.some(cur=>cur.code===c.currency)){
       items.push({category:t('anomaly_cat_5'),
         text:`${c.accCode||''} — ${c.name||''}: ${t('anomaly_txt_currency_not_in_list')} "${c.currency}" ${t('anomaly_txt_not_in_list')}`,
         gotoAccount:c.account});
     }
   });
-  // 6. Codice conto o descrizione mancanti
+  // 6. Codice conto o descrizione mancanti (solo attivi)
   state.costs.forEach(c=>{
+    if(!activeAccounts.has(c.account)) return;
     if(!c.accCode || !c.name){
       items.push({category:t('anomaly_cat_6'),
         text:`${t('alloc_detail_account_prefix')} ${c.account}${c.accCode?' — '+c.accCode:''}${c.name?' — '+c.name:''}`,
