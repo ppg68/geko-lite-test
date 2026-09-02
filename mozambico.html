@@ -676,6 +676,7 @@ const I18N = {
     cd_total_cost:'Totale costo', cd_allocated:'Allocato', cd_still_alloc:'Ancora da allocare',
     cd_counterval_prefix:'Controvalore in', cd_total_label:'totale', cd_toallocate_label:'da allocare',
     cd_summary_title:'Riepilogo allocazioni', cd_new_alloc:'+ Nuova allocazione',
+    cd_summary_copy_prev_title:'Copia budget line e importo dal mese precedente',
     cd_summary_subtitle:"Tutte le allocazioni di questo conto, di ogni mese, modificabili qui senza dover aprire il pannello mese per mese.",
     cd_th_month:'Mese', cd_th_budgetline:'Budget line', cd_th_amount:'Importo',
     cd_summary_empty:'Nessuna allocazione ancora su questo conto',
@@ -857,6 +858,7 @@ const I18N = {
     cd_total_cost:'Total cost', cd_allocated:'Allocated', cd_still_alloc:'Still to allocate',
     cd_counterval_prefix:'Equivalent in', cd_total_label:'total', cd_toallocate_label:'to allocate',
     cd_summary_title:'Allocation summary', cd_new_alloc:'+ New allocation',
+    cd_summary_copy_prev_title:"Copy budget line and amount from the previous month",
     cd_summary_subtitle:'All allocations for this account, for every month, editable here without opening the month-by-month panel.',
     cd_th_month:'Month', cd_th_budgetline:'Budget line', cd_th_amount:'Amount',
     cd_summary_empty:'No allocation yet for this account',
@@ -1038,6 +1040,7 @@ const I18N = {
     cd_total_cost:'Coût total', cd_allocated:'Alloué', cd_still_alloc:'Encore à allouer',
     cd_counterval_prefix:'Contrevaleur en', cd_total_label:'total', cd_toallocate_label:'à allouer',
     cd_summary_title:'Résumé des allocations', cd_new_alloc:'+ Nouvelle allocation',
+    cd_summary_copy_prev_title:'Copier la budget line et le montant du mois précédent',
     cd_summary_subtitle:"Toutes les allocations de ce compte, pour chaque mois, modifiables ici sans ouvrir le panneau mois par mois.",
     cd_th_month:'Mois', cd_th_budgetline:'Budget line', cd_th_amount:'Montant',
     cd_summary_empty:'Aucune allocation pour ce compte pour le moment',
@@ -1219,6 +1222,7 @@ const I18N = {
     cd_total_cost:'Costo total', cd_allocated:'Asignado', cd_still_alloc:'Aún por asignar',
     cd_counterval_prefix:'Contravalor en', cd_total_label:'total', cd_toallocate_label:'por asignar',
     cd_summary_title:'Resumen de asignaciones', cd_new_alloc:'+ Nueva asignación',
+    cd_summary_copy_prev_title:'Copiar la budget line y el importe del mes anterior',
     cd_summary_subtitle:'Todas las asignaciones de esta cuenta, de cada mes, editables aquí sin abrir el panel mes a mes.',
     cd_th_month:'Mes', cd_th_budgetline:'Budget line', cd_th_amount:'Importe',
     cd_summary_empty:'Aún no hay asignaciones en esta cuenta',
@@ -1400,6 +1404,7 @@ const I18N = {
     cd_total_cost:'Custo total', cd_allocated:'Alocado', cd_still_alloc:'Ainda a alocar',
     cd_counterval_prefix:'Contravalor em', cd_total_label:'total', cd_toallocate_label:'a alocar',
     cd_summary_title:'Resumo das alocações', cd_new_alloc:'+ Nova alocação',
+    cd_summary_copy_prev_title:'Copiar a budget line e o valor do mês anterior',
     cd_summary_subtitle:'Todas as alocações desta conta, de cada mês, editáveis aqui sem precisar abrir o painel mês a mês.',
     cd_th_month:'Mês', cd_th_budgetline:'Budget line', cd_th_amount:'Valor',
     cd_summary_empty:'Ainda não há alocações nesta conta',
@@ -2225,10 +2230,16 @@ function viewCostDetail(account){
     <tbody>${(()=>{
       const summaryAllocs = state.allocations.filter(a=>a.account===account).slice().sort((a,b)=> a.month.localeCompare(b.month));
       if(!summaryAllocs.length) return `<tr><td colspan="5" class="empty">${t('cd_summary_empty')}</td></tr>`;
+      const monthsListForAcc = monthsForAccount(c);
       return summaryAllocs.map(a=>{
         const mc = state.monthlyCosts.find(x=>x.account===account && x.month===a.month);
         const costMonth = mc ? mc.cost : null;
         const share = costMonth ? (a.amount/costMonth*100) : 0;
+        const prevMonthIdx = monthsListForAcc.indexOf(a.month);
+        const prevMonth = prevMonthIdx>0 ? monthsListForAcc[prevMonthIdx-1] : null;
+        const posInMonth = summaryAllocs.filter(x=>x.month===a.month).indexOf(a);
+        const prevMonthRows = prevMonth ? state.allocations.filter(x=>x.account===account && x.month===prevMonth) : [];
+        const copySource = prevMonthRows[posInMonth] || null;
         return `<tr data-summary-alloc-id="${a._id}">
           <td>${monthLabel(a.month)}</td>
           <td>
@@ -2239,7 +2250,7 @@ function viewCostDetail(account){
           </td>
           <td class="num"><input class="num-input summary-amt-input" type="text" inputmode="decimal" value="${fmt(a.amount)}"></td>
           <td class="num"><input class="num-input summary-pct-input" type="text" inputmode="decimal" value="${costMonth?fmt(share):''}" placeholder="—" style="width:70px">%</td>
-          <td><button class="icon-btn summary-del-alloc-btn">✕</button></td>
+          <td>${copySource ? `<button class="icon-btn summary-copy-prev-btn" data-source-id="${copySource._id}" title="${t('cd_summary_copy_prev_title')}">⇊</button>` : ''}<button class="icon-btn summary-del-alloc-btn">✕</button></td>
         </tr>`;
       }).join('');
     })()}</tbody>
@@ -2775,6 +2786,14 @@ function attachAllocSummaryHandlers(){
     };
     tr.querySelector('.summary-del-alloc-btn').onclick = ()=>{
       state.allocations = state.allocations.filter(a=>a!==rec);
+      saveState(); render();
+    };
+    const copyBtn = tr.querySelector('.summary-copy-prev-btn');
+    if(copyBtn) copyBtn.onclick = ()=>{
+      const source = state.allocations.find(a=>a._id===copyBtn.dataset.sourceId);
+      if(!source) return;
+      rec.projectCode = source.projectCode;
+      rec.amount = source.amount;
       saveState(); render();
     };
   });
