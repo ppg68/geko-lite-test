@@ -655,6 +655,7 @@ function resetAllData(){
   currentAccount = null;
   currentTab = 'dashboard';
   costiFindQuery = ''; progettiFindQuery = ''; dashboardFilter = 'all'; projectKindFilter = 'all'; costiStatusFilter = 'all';
+  allocFilterProject = ''; allocFilterBudgetLine = ''; allocFilterAccount = ''; allocFilterFrom = ''; allocFilterTo = '';
   saveState();
   closeModal();
   render();
@@ -765,7 +766,7 @@ async function downloadUpdatedFileAs(){
 // ---------- I18N ----------
 const I18N = {
   it: {
-    nav_dashboard:'📊 Dashboard', nav_costi:'💶 Costi', nav_progetti:'📁 Progetti', nav_reparti:'🏷️ Reparti', nav_cambio:'💱 Cambio',
+    nav_dashboard:'📊 Dashboard', nav_costi:'💶 Costi', nav_allocazioni:'📋 Allocazioni', nav_progetti:'📁 Progetti', nav_reparti:'🏷️ Reparti', nav_cambio:'💱 Cambio',
     sidebar_download:'⤓ Salva',
     sidebar_download_hint:'Allega questo file alla tua email di risposta. Chi lo riceve avrà già tutti i tuoi dati aggiornati.',
     sidebar_save_as:'⤓ Salva con nome',
@@ -846,6 +847,11 @@ const I18N = {
     alloc_detail_title_prefix:'Chi ha allocato su', alloc_detail_th_month:'Mese', alloc_detail_th_costline:'Voce di costo',
     alloc_detail_th_amount_prefix:'Importo', alloc_detail_empty:'Nessuna allocazione su questa budget line',
     alloc_detail_total:'Totale', alloc_detail_account_prefix:'Conto', modal_close:'Chiudi',
+    alloc_title:'Allocazioni', alloc_subtitle:'Elenco di tutte le allocazioni. Filtra per progetto, budget line, persona allocata e periodo.',
+    alloc_filter_allprojects:'Tutti i progetti', alloc_filter_budgetline_placeholder:'🔍 Cerca budget line…', alloc_filter_account_placeholder:'🔍 Cerca persona…',
+    alloc_filter_allmonths:'Tutti i mesi', alloc_btn_reset:'Azzera filtri',
+    alloc_th_month:'Mese', alloc_th_account:'Conto', alloc_th_project:'Progetto', alloc_th_budgetline:'Budget line', alloc_th_amount_prefix:'Importo',
+    alloc_empty:'Nessuna allocazione corrisponde ai filtri', alloc_total_prefix:'Totale',
     meta_title:'Paese / Coordinamento', meta_country:'Paese', meta_coord:'Codice coordinamento',
     modal_cancel:'Annulla', modal_save:'Salva',
     toast_file_downloaded:'File aggiornato scaricato — allegalo alla tua email',
@@ -948,7 +954,7 @@ const I18N = {
     import_confirm_suffix:'"?\nQuesto SOSTITUISCE tutti i dati attuali di questa sezione (non li somma/unisce).',
   },
   en: {
-    nav_dashboard:'📊 Dashboard', nav_costi:'💶 Costs', nav_progetti:'📁 Projects', nav_reparti:'🏷️ Departments', nav_cambio:'💱 Exchange rates',
+    nav_dashboard:'📊 Dashboard', nav_costi:'💶 Costs', nav_allocazioni:'📋 Allocations', nav_progetti:'📁 Projects', nav_reparti:'🏷️ Departments', nav_cambio:'💱 Exchange rates',
     sidebar_download:'⤓ Save',
     sidebar_download_hint:'Attach this file to your reply email. The recipient will already have all your updated data.',
     sidebar_save_as:'⤓ Save as',
@@ -1029,6 +1035,11 @@ const I18N = {
     alloc_detail_title_prefix:'Who allocated on', alloc_detail_th_month:'Month', alloc_detail_th_costline:'Cost line',
     alloc_detail_th_amount_prefix:'Amount', alloc_detail_empty:'No allocation on this budget line',
     alloc_detail_total:'Total', alloc_detail_account_prefix:'Account', modal_close:'Close',
+    alloc_title:'Allocations', alloc_subtitle:'List of all allocations. Filter by project, budget line, allocated person and period.',
+    alloc_filter_allprojects:'All projects', alloc_filter_budgetline_placeholder:'🔍 Search budget line…', alloc_filter_account_placeholder:'🔍 Search person…',
+    alloc_filter_allmonths:'All months', alloc_btn_reset:'Clear filters',
+    alloc_th_month:'Month', alloc_th_account:'Account', alloc_th_project:'Project', alloc_th_budgetline:'Budget line', alloc_th_amount_prefix:'Amount',
+    alloc_empty:'No allocation matches the filters', alloc_total_prefix:'Total',
     meta_title:'Country / Coordination', meta_country:'Country', meta_coord:'Coordination code',
     modal_cancel:'Cancel', modal_save:'Save',
     toast_file_downloaded:'Updated file downloaded — attach it to your reply email',
@@ -1131,7 +1142,7 @@ const I18N = {
     import_confirm_suffix:'"?\nThis REPLACES all current data in this section (it does not merge/add).',
   },
   fr: {
-    nav_dashboard:'📊 Tableau de bord', nav_costi:'💶 Coûts', nav_progetti:'📁 Projets', nav_reparti:'🏷️ Départements', nav_cambio:'💱 Taux de change',
+    nav_dashboard:'📊 Tableau de bord', nav_costi:'💶 Coûts', nav_allocazioni:'📋 Allocations', nav_progetti:'📁 Projets', nav_reparti:'🏷️ Départements', nav_cambio:'💱 Taux de change',
     sidebar_download:'⤓ Enregistrer',
     sidebar_download_hint:'Joignez ce fichier à votre e-mail de réponse. Le destinataire aura déjà toutes vos données à jour.',
     sidebar_save_as:'⤓ Enregistrer sous',
@@ -1212,6 +1223,11 @@ const I18N = {
     alloc_detail_title_prefix:'Qui a alloué sur', alloc_detail_th_month:'Mois', alloc_detail_th_costline:'Ligne de coût',
     alloc_detail_th_amount_prefix:'Montant', alloc_detail_empty:'Aucune allocation sur cette budget line',
     alloc_detail_total:'Total', alloc_detail_account_prefix:'Compte', modal_close:'Fermer',
+    alloc_title:'Allocations', alloc_subtitle:'Liste de toutes les allocations. Filtrez par projet, budget line, personne allouée et période.',
+    alloc_filter_allprojects:'Tous les projets', alloc_filter_budgetline_placeholder:'🔍 Rechercher une budget line…', alloc_filter_account_placeholder:'🔍 Rechercher une personne…',
+    alloc_filter_allmonths:'Tous les mois', alloc_btn_reset:'Effacer les filtres',
+    alloc_th_month:'Mois', alloc_th_account:'Compte', alloc_th_project:'Projet', alloc_th_budgetline:'Budget line', alloc_th_amount_prefix:'Montant',
+    alloc_empty:'Aucune allocation ne correspond aux filtres', alloc_total_prefix:'Total',
     meta_title:'Pays / Coordination', meta_country:'Pays', meta_coord:'Code de coordination',
     modal_cancel:'Annuler', modal_save:'Enregistrer',
     toast_file_downloaded:'Fichier mis à jour téléchargé — joignez-le à votre e-mail de réponse',
@@ -1314,7 +1330,7 @@ const I18N = {
     import_confirm_suffix:' » ?\nCela REMPLACE toutes les données actuelles de cette section (ne les additionne pas).',
   },
   es: {
-    nav_dashboard:'📊 Panel', nav_costi:'💶 Costos', nav_progetti:'📁 Proyectos', nav_reparti:'🏷️ Departamentos', nav_cambio:'💱 Tipos de cambio',
+    nav_dashboard:'📊 Panel', nav_costi:'💶 Costos', nav_allocazioni:'📋 Asignaciones', nav_progetti:'📁 Proyectos', nav_reparti:'🏷️ Departamentos', nav_cambio:'💱 Tipos de cambio',
     sidebar_download:'⤓ Guardar',
     sidebar_download_hint:'Adjunte este archivo a su correo de respuesta. El destinatario ya tendrá todos sus datos actualizados.',
     sidebar_save_as:'⤓ Guardar como',
@@ -1395,6 +1411,11 @@ const I18N = {
     alloc_detail_title_prefix:'Quién asignó en', alloc_detail_th_month:'Mes', alloc_detail_th_costline:'Línea de costo',
     alloc_detail_th_amount_prefix:'Importe', alloc_detail_empty:'Ninguna asignación en esta budget line',
     alloc_detail_total:'Total', alloc_detail_account_prefix:'Cuenta', modal_close:'Cerrar',
+    alloc_title:'Asignaciones', alloc_subtitle:'Lista de todas las asignaciones. Filtre por proyecto, budget line, persona asignada y período.',
+    alloc_filter_allprojects:'Todos los proyectos', alloc_filter_budgetline_placeholder:'🔍 Buscar budget line…', alloc_filter_account_placeholder:'🔍 Buscar persona…',
+    alloc_filter_allmonths:'Todos los meses', alloc_btn_reset:'Borrar filtros',
+    alloc_th_month:'Mes', alloc_th_account:'Cuenta', alloc_th_project:'Proyecto', alloc_th_budgetline:'Budget line', alloc_th_amount_prefix:'Importe',
+    alloc_empty:'Ninguna asignación coincide con los filtros', alloc_total_prefix:'Total',
     meta_title:'País / Coordinación', meta_country:'País', meta_coord:'Código de coordinación',
     modal_cancel:'Cancelar', modal_save:'Guardar',
     toast_file_downloaded:'Archivo actualizado descargado — adjúntelo a su correo de respuesta',
@@ -1497,7 +1518,7 @@ const I18N = {
     import_confirm_suffix:'"?\nEsto REEMPLAZA todos los datos actuales de esta sección (no los suma/combina).',
   },
   pt: {
-    nav_dashboard:'📊 Painel', nav_costi:'💶 Custos', nav_progetti:'📁 Projetos', nav_reparti:'🏷️ Departamentos', nav_cambio:'💱 Taxas de câmbio',
+    nav_dashboard:'📊 Painel', nav_costi:'💶 Custos', nav_allocazioni:'📋 Alocações', nav_progetti:'📁 Projetos', nav_reparti:'🏷️ Departamentos', nav_cambio:'💱 Taxas de câmbio',
     sidebar_download:'⤓ Salvar',
     sidebar_download_hint:'Anexe este arquivo ao seu e-mail de resposta. O destinatário já terá todos os seus dados atualizados.',
     sidebar_save_as:'⤓ Salvar como',
@@ -1578,6 +1599,11 @@ const I18N = {
     alloc_detail_title_prefix:'Quem alocou em', alloc_detail_th_month:'Mês', alloc_detail_th_costline:'Linha de custo',
     alloc_detail_th_amount_prefix:'Valor', alloc_detail_empty:'Nenhuma alocação nesta budget line',
     alloc_detail_total:'Total', alloc_detail_account_prefix:'Conta', modal_close:'Fechar',
+    alloc_title:'Alocações', alloc_subtitle:'Lista de todas as alocações. Filtre por projeto, budget line, pessoa alocada e período.',
+    alloc_filter_allprojects:'Todos os projetos', alloc_filter_budgetline_placeholder:'🔍 Buscar budget line…', alloc_filter_account_placeholder:'🔍 Buscar pessoa…',
+    alloc_filter_allmonths:'Todos os meses', alloc_btn_reset:'Limpar filtros',
+    alloc_th_month:'Mês', alloc_th_account:'Conta', alloc_th_project:'Projeto', alloc_th_budgetline:'Budget line', alloc_th_amount_prefix:'Valor',
+    alloc_empty:'Nenhuma alocação corresponde aos filtros', alloc_total_prefix:'Total',
     meta_title:'País / Coordenação', meta_country:'País', meta_coord:'Código de coordenação',
     modal_cancel:'Cancelar', modal_save:'Salvar',
     toast_file_downloaded:'Arquivo atualizado baixado — anexe-o ao seu e-mail de resposta',
@@ -1721,6 +1747,11 @@ let expandedDepts = new Set();
 let dashboardFilter = 'all';
 let costiFindQuery = '';
 let progettiFindQuery = '';
+let allocFilterProject = '';
+let allocFilterBudgetLine = '';
+let allocFilterAccount = '';
+let allocFilterFrom = '';
+let allocFilterTo = '';
 function kindPrefix(k){ return (k||'').trim().slice(0,2); }
 
 function toast(msg){
@@ -2075,6 +2106,7 @@ function render(){
   const main = document.getElementById('main');
   if(currentTab==='dashboard') main.innerHTML = viewDashboard();
   else if(currentTab==='costi') main.innerHTML = currentAccount ? viewCostDetail(currentAccount) : viewCostiList();
+  else if(currentTab==='allocazioni') main.innerHTML = viewAllocazioni();
   else if(currentTab==='progetti') main.innerHTML = viewProgetti();
   else if(currentTab==='reparti') main.innerHTML = viewReparti();
   else if(currentTab==='cambio') main.innerHTML = viewCambio();
@@ -2117,6 +2149,7 @@ function renderNav(){
   const items = [
     {id:'dashboard', label:t('nav_dashboard')},
     {id:'costi', label:t('nav_costi')},
+    {id:'allocazioni', label:t('nav_allocazioni')},
     {id:'progetti', label:t('nav_progetti')},
     {id:'reparti', label:t('nav_reparti')},
     {id:'cambio', label:t('nav_cambio')},
@@ -2497,6 +2530,71 @@ function allocPanelHtml(account, month){
 }
 
 // ---------- PROGETTI ----------
+function viewAllocazioni(){
+  const monthsAvail = [...new Set(state.allocations.map(a=>a.month).filter(Boolean))].sort();
+  const q = allocFilterBudgetLine.trim().toLowerCase();
+  const qAcc = allocFilterAccount.trim().toLowerCase();
+  const filtered = state.allocations.filter(a=>{
+    const pc = state.projectCodes.find(x=>x.fullCode===a.projectCode);
+    if(allocFilterProject && (!pc || pc.project!==allocFilterProject)) return false;
+    if(q && !((a.projectCode||'').toLowerCase().includes(q) || ((pc&&pc.description)||'').toLowerCase().includes(q))) return false;
+    if(allocFilterFrom && (!a.month || a.month<allocFilterFrom)) return false;
+    if(allocFilterTo && (!a.month || a.month>allocFilterTo)) return false;
+    if(qAcc){
+      const c = state.costs.find(x=>x.account===a.account);
+      const label = `${c?(c.accCode||''):''} ${c?(c.name||''):''}`.toLowerCase();
+      if(!label.includes(qAcc)) return false;
+    }
+    return true;
+  }).slice().sort((a,b)=> (a.month||'').localeCompare(b.month||'') || String(a.account).localeCompare(String(b.account), undefined, {numeric:true, sensitivity:'base'}));
+  const rows = filtered.map(a=>{
+    const c = state.costs.find(x=>x.account===a.account);
+    const pc = state.projectCodes.find(x=>x.fullCode===a.projectCode);
+    const curr = c ? (c.currency||mainCurrency()) : mainCurrency();
+    const mainAmt = toMain(a.amount||0, curr);
+    const nativeNote = curr!==mainCurrency() ? ` <span style="color:#8a8474;font-size:11px">(${fmt(a.amount)} ${curr})</span>` : '';
+    return `<tr>
+      <td>${monthLabel(a.month)}</td>
+      <td>${c ? `<a href="#" class="alloc-goto-cost-link" data-account="${a.account}">${escv(c.accCode)} — ${escv(c.name)}</a>` : `${t('alloc_detail_account_prefix')} ${a.account}`}</td>
+      <td>${escv(pc ? pc.project : '')}</td>
+      <td>${pc ? `<a href="#" class="alloc-detail-link" data-fullcode="${escv(pc.fullCode)}" title="${t('proj_alloc_detail_title')}">${escv(pc.fullCode)}</a>` : escv(a.projectCode||'')}</td>
+      <td class="num">${fmt(mainAmt)}${nativeNote}</td>
+    </tr>`;
+  }).join('');
+  const total = filtered.reduce((s,a)=>{ const c=state.costs.find(x=>x.account===a.account); return s + toMain(a.amount||0, c?(c.currency||mainCurrency()):mainCurrency()); },0);
+  return `
+  <h1>${t('alloc_title')}</h1>
+  <div class="subtitle">${t('alloc_subtitle')}</div>
+  <div class="toolbar find-toolbar">
+    <select id="alloc-filter-project">
+      <option value="">${t('alloc_filter_allprojects')}</option>
+      ${state.projects.slice().sort((a,b)=>(a.code||'').localeCompare(b.code||'', undefined, {numeric:true, sensitivity:'base'})).map(p=>`<option value="${escv(p.code)}" ${allocFilterProject===p.code?'selected':''}>${escv(p.code)} — ${escv(p.title||'')}</option>`).join('')}
+    </select>
+    <input type="text" id="alloc-filter-budgetline" class="find-input" placeholder="${t('alloc_filter_budgetline_placeholder')}" value="${escv(allocFilterBudgetLine)}">
+    <input type="text" id="alloc-filter-account" class="find-input" placeholder="${t('alloc_filter_account_placeholder')}" value="${escv(allocFilterAccount)}">
+    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <label style="display:flex;align-items:center;gap:6px;white-space:nowrap">${t('ba_from')}
+        <select id="alloc-filter-from">
+          <option value="">${t('alloc_filter_allmonths')}</option>
+          ${monthsAvail.map(m=>`<option value="${m}" ${allocFilterFrom===m?'selected':''}>${monthLabel(m)}</option>`).join('')}
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;white-space:nowrap">${t('ba_to')}
+        <select id="alloc-filter-to">
+          <option value="">${t('alloc_filter_allmonths')}</option>
+          ${monthsAvail.map(m=>`<option value="${m}" ${allocFilterTo===m?'selected':''}>${monthLabel(m)}</option>`).join('')}
+        </select>
+      </label>
+    </div>
+    <button class="btn ghost small" id="btn-alloc-reset-filters">${t('alloc_btn_reset')}</button>
+  </div>
+  <table>
+    <thead><tr><th>${t('alloc_th_month')}</th><th>${t('alloc_th_account')}</th><th>${t('alloc_th_project')}</th><th>${t('alloc_th_budgetline')}</th><th class="num">${t('alloc_th_amount_prefix')} (${mainCurrency()})</th></tr></thead>
+    <tbody>${rows || `<tr><td colspan="5" class="empty">${t('alloc_empty')}</td></tr>`}</tbody>
+    <tfoot><tr class="grp"><td colspan="4">${t('alloc_total_prefix')} (${filtered.length})</td><td class="num">${fmt(total)}</td></tr></tfoot>
+  </table>`;
+}
+
 function viewProgetti(){
   const KIND_OPTIONS = [
     {v:'01 Approvato', label:t('proj_kind_01')},
@@ -3886,6 +3984,41 @@ function attachHandlers(){
       const code = tr.dataset.toggleProject;
       if(expandedProjects.has(code)) expandedProjects.delete(code);
       else expandedProjects.add(code);
+      render();
+    };
+  });
+  const allocProjectSelect = document.getElementById('alloc-filter-project');
+  if(allocProjectSelect) allocProjectSelect.onchange = ()=>{ allocFilterProject = allocProjectSelect.value; render(); };
+  const allocBudgetLineInput = document.getElementById('alloc-filter-budgetline');
+  if(allocBudgetLineInput){
+    allocBudgetLineInput.oninput = ()=>{
+      allocFilterBudgetLine = allocBudgetLineInput.value; render();
+      const el = document.getElementById('alloc-filter-budgetline');
+      el.focus(); el.setSelectionRange(allocFilterBudgetLine.length, allocFilterBudgetLine.length);
+    };
+  }
+  const allocAccountInput = document.getElementById('alloc-filter-account');
+  if(allocAccountInput){
+    allocAccountInput.oninput = ()=>{
+      allocFilterAccount = allocAccountInput.value; render();
+      const el = document.getElementById('alloc-filter-account');
+      el.focus(); el.setSelectionRange(allocFilterAccount.length, allocFilterAccount.length);
+    };
+  }
+  const allocFromSelect = document.getElementById('alloc-filter-from');
+  if(allocFromSelect) allocFromSelect.onchange = ()=>{ allocFilterFrom = allocFromSelect.value; render(); };
+  const allocToSelect = document.getElementById('alloc-filter-to');
+  if(allocToSelect) allocToSelect.onchange = ()=>{ allocFilterTo = allocToSelect.value; render(); };
+  const btnAllocResetFilters = document.getElementById('btn-alloc-reset-filters');
+  if(btnAllocResetFilters) btnAllocResetFilters.onclick = ()=>{
+    allocFilterProject=''; allocFilterBudgetLine=''; allocFilterAccount=''; allocFilterFrom=''; allocFilterTo='';
+    render();
+  };
+  document.querySelectorAll('.alloc-goto-cost-link').forEach(link=>{
+    link.onclick = (e)=>{
+      e.preventDefault();
+      currentTab = 'costi';
+      currentAccount = parseInt(link.dataset.account);
       render();
     };
   });
