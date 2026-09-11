@@ -2242,6 +2242,9 @@ function viewCostiList(){
     const arrow = active ? (costiSort.dir==='asc'?'▲':'▼') : '↕';
     return `<th class="sortable-th${numClass?' num':''}" data-sort-key="${sortKey}">${label} <span class="sort-arrow${active?' active':''}">${arrow}</span></th>`;
   };
+  const grandTotal = enriched.reduce((s,r)=>s+r.tot,0);
+  const grandAlloc = enriched.reduce((s,r)=>s+r.all,0);
+  const grandDelta = grandTotal-grandAlloc;
   return `
   <h1>${t('costi_title')}</h1>
   <div class="subtitle">${t('costi_subtitle')}</div>
@@ -2268,6 +2271,7 @@ function viewCostiList(){
       <th style="width:30px"></th>
     </tr></thead>
     <tbody>${rows || `<tr><td colspan="9" class="empty">${costiFindQuery?t('costi_empty_found'):t('costi_empty_none')}</td></tr>`}</tbody>
+    ${enriched.length ? `<tfoot><tr class="grp"><td colspan="5">${t('dash_totals')}</td><td class="num">${fmt(grandTotal)}</td><td class="num">${fmt(grandAlloc)}</td><td class="num">${fmt(grandDelta)}</td><td></td></tr></tfoot>` : ''}
   </table>`;
 }
 
