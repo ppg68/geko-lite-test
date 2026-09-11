@@ -2186,10 +2186,10 @@ function viewCostDetail(account){
             </select>
           </td>
           <td style="display:flex;align-items:center;gap:4px">
-            <select class="summary-pc-select" style="flex:1 1 auto">
-              <option value="">${t('cd_select_budgetline')}</option>
-              ${state.projectCodes.map(pc=>`<option value="${escv(pc.fullCode)}" ${pc.fullCode===a.projectCode?'selected':''}>${escv(pc.fullCode)} — ${escv((pc.description||'').slice(0,40))}</option>`).join('')}
-            </select>
+            <div style="position:relative;flex:1 1 auto">
+              <input type="text" class="summary-pc-input" autocomplete="off" data-last-valid="${escv(a.projectCode||'')}" value="${escv(a.projectCode||'')}" placeholder="${t('cd_select_budgetline')}" style="width:100%">
+              <div class="summary-pc-list pc-suggest" style="display:none"></div>
+            </div>
             ${copySource ? `<button class="icon-btn summary-copy-prev-bl-btn" data-source-id="${copySource._id}" title="${t('cd_summary_copy_prev_bl_title')}">⇊</button>` : ''}
           </td>
           <td class="num">
@@ -2652,9 +2652,17 @@ function duplicateCostModal(){
 }
 // Casella di ricerca per le budget line: filtra per prefisso del codice mentre si
 // digita (ordinate), al posto di uno <select> con centinaia di righe da scorrere.
-function attachBudgetLineSearch(inputId, listId){
-  const input = document.getElementById(inputId);
-  const list = document.getElementById(listId);
+function attachBudgetLineSearch(inputId, listId, onSelect){
+  attachBudgetLineSearchEl(document.getElementById(inputId), document.getElementById(listId), onSelect);
+}
+// Versione a elementi diretti (invece che a id) di attachBudgetLineSearch: usata
+// dove ci sono più righe con lo stesso campo di ricerca (es. Riepilogo
+// allocazioni), dove gli id non possono essere univoci. onSelect(code), se
+// passato, viene richiamato ogni volta che l'utente sceglie un codice valido
+// (click su un suggerimento, o testo digitato che combacia esattamente con un
+// codice esistente al blur) — usato dalle celle di editing inline che devono
+// salvare subito, a differenza dei modali che leggono il valore solo al submit.
+function attachBudgetLineSearchEl(input, list, onSelect){
   if(!input || !list) return;
   const codes = state.projectCodes.slice().sort((a,b)=> a.fullCode.localeCompare(b.fullCode, undefined, {numeric:true, sensitivity:'base'}));
   function renderList(query){
@@ -2666,13 +2674,23 @@ function attachBudgetLineSearch(inputId, listId){
   }
   input.addEventListener('focus', ()=> renderList(input.value));
   input.addEventListener('input', ()=> renderList(input.value));
-  input.addEventListener('blur', ()=> setTimeout(()=>{ list.style.display='none'; }, 150));
+  input.addEventListener('blur', ()=> setTimeout(()=>{
+    list.style.display='none';
+    if(!onSelect) return;
+    const val = input.value.trim();
+    if(!val){ input.dataset.lastValid=''; onSelect(''); return; }
+    const match = codes.find(pc=>pc.fullCode===val);
+    if(match){ input.dataset.lastValid = match.fullCode; onSelect(match.fullCode); }
+    else{ input.value = input.dataset.lastValid || ''; }
+  }, 150));
   list.addEventListener('mousedown', (e)=>{
     const item = e.target.closest('.pc-suggest-item');
     if(!item) return;
     e.preventDefault();
     input.value = item.dataset.code;
+    input.dataset.lastValid = item.dataset.code;
     list.style.display = 'none';
+    if(onSelect) onSelect(item.dataset.code);
   });
 }
 function newAllocFromSummaryModal(){
@@ -2717,7 +2735,7 @@ function attachAllocSummaryHandlers(){
     const mc = state.monthlyCosts.find(x=>x.account===rec.account && x.month===rec.month);
     const costMonth = mc ? mc.cost : 0;
     tr.querySelector('.summary-month-select').onchange = e=>{ rec.month = e.target.value; saveState(); render(); };
-    tr.querySelector('.summary-pc-select').onchange = e=>{ rec.projectCode = e.target.value; saveState(); render(); };
+    attachBudgetLineSearchEl(tr.querySelector('.summary-pc-input'), tr.querySelector('.summary-pc-list'), (code)=>{ rec.projectCode = code; saveState(); render(); });
     const amtInput = tr.querySelector('.summary-amt-input');
     amtInput.onfocus = ()=>{ amtInput.value = rec.amount; amtInput.select(); };
     amtInput.onkeydown = (e)=>{ if(e.key==='Enter') amtInput.blur(); };
