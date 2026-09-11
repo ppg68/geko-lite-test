@@ -523,7 +523,7 @@ function resetAllData(){
   expandedDepts = new Set();
   currentAccount = null;
   currentTab = 'dashboard';
-  costiFindQuery = ''; progettiFindQuery = ''; dashboardFilter = 'all'; projectKindFilter = 'all';
+  costiFindQuery = ''; progettiFindQuery = ''; dashboardFilter = 'all'; projectKindFilter = 'all'; costiStatusFilter = 'all';
   saveState();
   closeModal();
   render();
@@ -1584,6 +1584,7 @@ let currentTab = 'dashboard';
 let currentAccount = null;
 let expandedProjects = new Set();
 let projectKindFilter = 'all';
+let costiStatusFilter = 'all';
 let costiSort = {key:'account', dir:'asc'};
 let expandedDepts = new Set();
 let dashboardFilter = 'all';
@@ -2068,10 +2069,14 @@ function viewDashboard(){
 
 // ---------- COSTI LIST ----------
 function viewCostiList(){
-  const enriched = filteredCostiRows().map(c=>{
-    const tot = costTotalMain(c.account), all = costAllocatedMain(c.account);
-    return {c, tot, all, delta: tot-all};
-  });
+  const statusCounts = {all: state.costs.length, attivo: 0, terminato: 0};
+  state.costs.forEach(c=>{ c.status==='Terminato' ? statusCounts.terminato++ : statusCounts.attivo++; });
+  const enriched = filteredCostiRows()
+    .filter(c=> costiStatusFilter==='all' || (costiStatusFilter==='attivo' ? c.status!=='Terminato' : c.status==='Terminato'))
+    .map(c=>{
+      const tot = costTotalMain(c.account), all = costAllocatedMain(c.account);
+      return {c, tot, all, delta: tot-all};
+    });
   const key = costiSort.key, dir = costiSort.dir;
   enriched.sort((x,y)=>{
     let va, vb;
@@ -2114,12 +2119,18 @@ function viewCostiList(){
   const grandTotal = enriched.reduce((s,r)=>s+r.tot,0);
   const grandAlloc = enriched.reduce((s,r)=>s+r.all,0);
   const grandDelta = grandTotal-grandAlloc;
+  const costiFilterBtn = (key,label)=> `<button class="btn ${costiStatusFilter===key?'accent':'ghost'} small costi-filter-btn" data-filter="${key}">${label} (${key==='all'?statusCounts.all:statusCounts[key]})</button>`;
   return `
   <h1>${t('costi_title')}</h1>
   <div class="subtitle">${t('costi_subtitle')}</div>
   <div class="toolbar">
     <button class="btn accent" id="btn-new-cost">${t('costi_btn_new')}</button>
     ${ioButtonsHtml('costs')}${ioButtonsHtml('monthlyCosts')}${ioButtonsHtml('allocations')}
+  </div>
+  <div class="toolbar">
+    ${costiFilterBtn('all',t('proj_filter_all'))}
+    ${costiFilterBtn('attivo',t('costi_status_active'))}
+    ${costiFilterBtn('terminato',t('costi_status_terminated'))}
   </div>
   <div class="toolbar find-toolbar">
     <input type="text" id="costi-find-input" class="find-input" placeholder="${t('costi_find_placeholder')}" value="${escv(costiFindQuery)}">
@@ -2140,7 +2151,7 @@ function viewCostiList(){
       <th style="width:30px"></th>
     </tr></thead>
     <tbody>${rows || `<tr><td colspan="9" class="empty">${costiFindQuery?t('costi_empty_found'):t('costi_empty_none')}</td></tr>`}</tbody>
-    ${enriched.length ? `<tfoot><tr class="grp"><td colspan="5">${t('dash_totals')}</td><td class="num">${fmt(grandTotal)}</td><td class="num">${fmt(grandAlloc)}</td><td class="num">${fmt(grandDelta)}</td><td></td></tr></tfoot>` : ''}
+    ${enriched.length ? `<tfoot><tr class="grp"><td colspan="5">${costiStatusFilter==='all' && !costiFindQuery ?t('dash_totals'):t('proj_subtotal_filter')}</td><td class="num">${fmt(grandTotal)}</td><td class="num">${fmt(grandAlloc)}</td><td class="num">${fmt(grandDelta)}</td><td></td></tr></tfoot>` : ''}
   </table>`;
 }
 
@@ -3858,6 +3869,12 @@ function attachHandlers(){
   document.querySelectorAll('.proj-filter-btn').forEach(btn=>{
     btn.onclick = ()=>{
       projectKindFilter = btn.dataset.filter;
+      render();
+    };
+  });
+  document.querySelectorAll('.costi-filter-btn').forEach(btn=>{
+    btn.onclick = ()=>{
+      costiStatusFilter = btn.dataset.filter;
       render();
     };
   });
